@@ -1,8 +1,13 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import Any, Dict
 
-app = FastAPI()
+from schemas import Contact
+from database import create_document
+
+app = FastAPI(title="TRONCA LEGAL API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -14,11 +19,20 @@ app.add_middleware(
 
 @app.get("/")
 def read_root():
-    return {"message": "Hello from FastAPI Backend!"}
+    return {"message": "TRONCA LEGAL API is running"}
 
 @app.get("/api/hello")
 def hello():
     return {"message": "Hello from the backend API!"}
+
+@app.post("/api/contact")
+def submit_contact(contact: Contact) -> Dict[str, Any]:
+    """Receive contact inquiries and store them in the database."""
+    try:
+        inserted_id = create_document("contact", contact)
+        return {"status": "success", "id": inserted_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/test")
 def test_database():
